@@ -77,4 +77,12 @@ class App
     else
       @renderer.render @scene, @camera
 
-app = new App document.getElementById('threejs-container')
+
+# onLoad
+
+isMobile = ->
+  return (/Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i).test(
+    navigator.userAgent || navigator.vendor || window.opera
+  )
+
+app = new App document.getElementById('threejs-container'), isMobile()
