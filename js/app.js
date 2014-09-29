@@ -10,11 +10,14 @@
       this.gameLoop = __bind(this.gameLoop, this);
       this.onResize = __bind(this.onResize, this);
       this.scene = new THREE.Scene();
+      this.scene.fog = new THREE.FogExp2(0x000000, 0.002);
       this.initRenderer();
       this.initCamera();
+      this.initControls();
       this.stereoEffect = new THREE.StereoEffect(this.renderer);
       this.addGroundToScene(this.scene);
       this.addLightToScene(this.scene);
+      this.addSkydomeToScene(this.scene);
       this.gameLoop();
       window.addEventListener('resize', this.onResize, false);
       setTimeout(this.onResize, 1);
@@ -30,8 +33,17 @@
 
     App.prototype.initCamera = function() {
       this.camera = new THREE.PerspectiveCamera(90, 1, 0.001, 700);
-      this.camera.position.set(0, 10, 0);
+      this.camera.position.set(0, 15, 0);
       return this.scene.add(this.camera);
+    };
+
+    App.prototype.initControls = function() {
+      this.controls = new THREE.OrbitControls(this.camera, this.container);
+      this.controls.rotateUp(Math.PI / 4);
+      this.controls.target.set(this.camera.position.x + .1, this.camera.position.y, this.camera.position.z);
+      this.controls.noZoom = true;
+      this.controls.noPan = true;
+      return this.controls.update();
     };
 
     App.prototype.onResize = function() {
@@ -48,6 +60,7 @@
     App.prototype.addGroundToScene = function(scene) {
       var geometry, material, mesh;
 
+      geometry = new THREE.PlaneGeometry(1000, 1000);
       material = new THREE.MeshPhongMaterial({
         color: 0xffffff,
         specular: 0xffffff,
@@ -58,7 +71,6 @@
       if (!(material.map instanceof THREE.Texture)) {
         throw "Warning: no ground texture found!";
       }
-      geometry = new THREE.PlaneGeometry(1000, 1000);
       mesh = new THREE.Mesh(geometry, material);
       mesh.rotation.x = -Math.PI / 2;
       return scene.add(mesh);
@@ -71,6 +83,18 @@
       return scene.add(light);
     };
 
+    App.prototype.addSkydomeToScene = function(scene) {
+      var geometry, material, mesh;
+
+      geometry = new THREE.SphereGeometry(600, 60, 40);
+      material = new THREE.MeshBasicMaterial({
+        map: this.getSkyTexture(),
+        side: THREE.BackSide
+      });
+      mesh = new THREE.Mesh(geometry, material);
+      return scene.add(mesh);
+    };
+
     App.prototype.getGroundTexture = function() {
       var texture;
 
@@ -79,6 +103,13 @@
       texture.wrapT = THREE.RepeatWrapping;
       texture.repeat = new THREE.Vector2(50, 50);
       texture.anisotropy = this.renderer.getMaxAnisotropy();
+      return texture;
+    };
+
+    App.prototype.getSkyTexture = function() {
+      var texture;
+
+      texture = THREE.ImageUtils.loadTexture('./textures/environments/milky_way.jpg');
       return texture;
     };
 
