@@ -1,6 +1,6 @@
 class App
 
-  glowDots: []
+  particleCount: 1000
 
   constructor: (@container, isMobile = false) ->
     @scene = new THREE.Scene()
@@ -21,9 +21,7 @@ class App
     @addGroundToScene(@scene)
     @addLightToScene(@scene)
     @addSkydomeToScene(@scene)
-
-    for i in [0..150]
-      @addGlowDotToScene @scene
+    @addGlowDotsToScene @scene
 
     @gameLoop()
 
@@ -70,9 +68,11 @@ class App
 
     material = new THREE.MeshPhongMaterial
       color: 0xffffff,
-      specular: 0xffffff,
-      shininess: 20,
+      specular: 0x000000,
+      shininess: 10,
       shading: THREE.FlatShading,
+      blending: THREE.AdditiveBlending,
+      transparent: true,
       map: @getGroundTexture()
 
     unless material.map instanceof THREE.Texture
@@ -96,26 +96,29 @@ class App
     mesh = new THREE.Mesh geometry, material
     scene.add mesh
 
-  addGlowDotToScene: (scene) ->
-    material = new THREE.SpriteMaterial
+  addGlowDotsToScene: (scene) ->
+    particles = new THREE.Geometry()
+
+    material = new THREE.PointCloudMaterial
       map: @getGlowDotTexture(),
       color: 0xffffff,
-      blending: THREE.AdditiveBlending
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      transparent: true
 
-    x = Math.random() * 40 - 20
-    x += (x > 0 ? 15 : -15)
-    z = Math.random() * 40 - 20
-    z += (z > 0 ? 15 : -15)
-    phi = Math.random() * 1000
-    amp = Math.random() * 2 + 1
+    for i in [0..@particleCount]
+      x = Math.random() * 40 - 20
+      x += (x > 0 ? 15 : -15)
+      z = Math.random() * 40 - 20
+      z += (z > 0 ? 15 : -15)
 
-    sprite = new THREE.Sprite material
-    sprite.position.x = x
-    sprite.position.z = z
-    sprite.sinPhi = phi
-    sprite.sinA = amp
-    @glowDots.push sprite
-    scene.add sprite
+      particle = new THREE.Vector3(x, @camera.position.y, z)
+      particle.phi = Math.random() * 1000
+      particle.amp = Math.random() * 2 + 1
+      particles.vertices.push particle
+
+    @pointCloud = new THREE.PointCloud particles, material
+    scene.add @pointCloud
 
   getGroundTexture: ->
     texture = THREE.ImageUtils.loadTexture './textures/patterns/checker.png'
@@ -144,8 +147,10 @@ class App
   update: (dt, et) ->
     @controls.update(dt) if @controls
 
-    for glowDot in @glowDots
-      glowDot.position.y = 15 + Math.sin(et - glowDot.sinPhi) * glowDot.sinA
+    for vertex in @pointCloud.geometry.vertices
+      vertex.y = @camera.position.y +
+        Math.sin(et - vertex.phi) * vertex.amp
+    @pointCloud.geometry.verticesNeedUpdate = true
 
   render: (dt, et) ->
     if @stereoEffect

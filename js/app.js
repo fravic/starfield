@@ -4,11 +4,9 @@
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   App = (function() {
-    App.prototype.glowDots = [];
+    App.prototype.particleCount = 1000;
 
     function App(container, isMobile) {
-      var i, _i;
-
       this.container = container;
       if (isMobile == null) {
         isMobile = false;
@@ -30,9 +28,7 @@
       this.addGroundToScene(this.scene);
       this.addLightToScene(this.scene);
       this.addSkydomeToScene(this.scene);
-      for (i = _i = 0; _i <= 150; i = ++_i) {
-        this.addGlowDotToScene(this.scene);
-      }
+      this.addGlowDotsToScene(this.scene);
       this.gameLoop();
       window.addEventListener('resize', this.onResize, false);
       setTimeout(this.onResize, 1);
@@ -84,9 +80,11 @@
       geometry = new THREE.PlaneGeometry(1000, 1000);
       material = new THREE.MeshPhongMaterial({
         color: 0xffffff,
-        specular: 0xffffff,
-        shininess: 20,
+        specular: 0x000000,
+        shininess: 10,
         shading: THREE.FlatShading,
+        blending: THREE.AdditiveBlending,
+        transparent: true,
         map: this.getGroundTexture()
       });
       if (!(material.map instanceof THREE.Texture)) {
@@ -116,31 +114,33 @@
       return scene.add(mesh);
     };
 
-    App.prototype.addGlowDotToScene = function(scene) {
-      var amp, material, phi, sprite, x, z, _ref, _ref1;
+    App.prototype.addGlowDotsToScene = function(scene) {
+      var i, material, particle, particles, x, z, _i, _ref, _ref1, _ref2;
 
-      material = new THREE.SpriteMaterial({
+      particles = new THREE.Geometry();
+      material = new THREE.PointCloudMaterial({
         map: this.getGlowDotTexture(),
         color: 0xffffff,
-        blending: THREE.AdditiveBlending
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        transparent: true
       });
-      x = Math.random() * 40 - 20;
-      x += (_ref = x > 0) != null ? _ref : {
-        15: -15
-      };
-      z = Math.random() * 40 - 20;
-      z += (_ref1 = z > 0) != null ? _ref1 : {
-        15: -15
-      };
-      phi = Math.random() * 1000;
-      amp = Math.random() * 2 + 1;
-      sprite = new THREE.Sprite(material);
-      sprite.position.x = x;
-      sprite.position.z = z;
-      sprite.sinPhi = phi;
-      sprite.sinA = amp;
-      this.glowDots.push(sprite);
-      return scene.add(sprite);
+      for (i = _i = 0, _ref = this.particleCount; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+        x = Math.random() * 40 - 20;
+        x += (_ref1 = x > 0) != null ? _ref1 : {
+          15: -15
+        };
+        z = Math.random() * 40 - 20;
+        z += (_ref2 = z > 0) != null ? _ref2 : {
+          15: -15
+        };
+        particle = new THREE.Vector3(x, this.camera.position.y, z);
+        particle.phi = Math.random() * 1000;
+        particle.amp = Math.random() * 2 + 1;
+        particles.vertices.push(particle);
+      }
+      this.pointCloud = new THREE.PointCloud(particles, material);
+      return scene.add(this.pointCloud);
     };
 
     App.prototype.getGroundTexture = function() {
@@ -179,18 +179,17 @@
     };
 
     App.prototype.update = function(dt, et) {
-      var glowDot, _i, _len, _ref, _results;
+      var vertex, _i, _len, _ref;
 
       if (this.controls) {
         this.controls.update(dt);
       }
-      _ref = this.glowDots;
-      _results = [];
+      _ref = this.pointCloud.geometry.vertices;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        glowDot = _ref[_i];
-        _results.push(glowDot.position.y = 15 + Math.sin(et - glowDot.sinPhi) * glowDot.sinA);
+        vertex = _ref[_i];
+        vertex.y = this.camera.position.y + Math.sin(et - vertex.phi) * vertex.amp;
       }
-      return _results;
+      return this.pointCloud.geometry.verticesNeedUpdate = true;
     };
 
     App.prototype.render = function(dt, et) {
