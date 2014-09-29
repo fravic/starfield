@@ -4,6 +4,8 @@
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   App = (function() {
+    App.prototype.glowDots = [];
+
     function App(container, isMobile) {
       this.container = container;
       if (isMobile == null) {
@@ -25,6 +27,7 @@
       this.addGroundToScene(this.scene);
       this.addLightToScene(this.scene);
       this.addSkydomeToScene(this.scene);
+      this.addGlowDotToScene(this.scene);
       this.gameLoop();
       window.addEventListener('resize', this.onResize, false);
       setTimeout(this.onResize, 1);
@@ -108,6 +111,22 @@
       return scene.add(mesh);
     };
 
+    App.prototype.addGlowDotToScene = function(scene) {
+      var material, sprite;
+
+      material = new THREE.SpriteMaterial({
+        map: this.getGlowDotTexture(),
+        color: 0xffffff,
+        fog: true,
+        blending: THREE.AdditiveBlending
+      });
+      sprite = new THREE.Sprite(material);
+      sprite.position.x = 2;
+      sprite.position.y = 15;
+      this.glowDots.push(sprite);
+      return scene.add(sprite);
+    };
+
     App.prototype.getGroundTexture = function() {
       var texture;
 
@@ -126,22 +145,40 @@
       return texture;
     };
 
+    App.prototype.getGlowDotTexture = function() {
+      var texture;
+
+      texture = THREE.ImageUtils.loadTexture('./textures/lensflare/lensflare0.png');
+      return texture;
+    };
+
     App.prototype.gameLoop = function() {
-      var dt;
+      var dt, et;
 
       requestAnimationFrame(this.gameLoop);
       dt = this.clock.getDelta();
-      this.update(dt);
-      return this.render(dt);
+      et = this.clock.getElapsedTime();
+      this.update(dt, et);
+      return this.render(dt, et);
     };
 
-    App.prototype.update = function(dt) {
+    App.prototype.update = function(dt, et) {
+      var glowDot, _i, _len, _ref, _results;
+
       if (this.controls) {
-        return this.controls.update(dt);
+        this.controls.update(dt);
       }
+      _ref = this.glowDots;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        glowDot = _ref[_i];
+        glowDot.position.y = 15 + Math.sin(et) * 2;
+        _results.push(glowDot.material.rotation += .1);
+      }
+      return _results;
     };
 
-    App.prototype.render = function() {
+    App.prototype.render = function(dt, et) {
       if (this.stereoEffect) {
         return this.stereoEffect.render(this.scene, this.camera);
       } else {

@@ -1,5 +1,7 @@
 class App
 
+  glowDots: []
+
   constructor: (@container, isMobile = false) ->
     @scene = new THREE.Scene()
     @scene.fog = new THREE.FogExp2 0x000000, 0.0015
@@ -18,6 +20,7 @@ class App
     @addGroundToScene(@scene)
     @addLightToScene(@scene)
     @addSkydomeToScene(@scene)
+    @addGlowDotToScene(@scene)
 
     @gameLoop()
 
@@ -90,6 +93,19 @@ class App
     mesh = new THREE.Mesh geometry, material
     scene.add mesh
 
+  addGlowDotToScene: (scene) ->
+    material = new THREE.SpriteMaterial
+      map: @getGlowDotTexture(),
+      color: 0xffffff,
+      fog: true,
+      blending: THREE.AdditiveBlending
+
+    sprite = new THREE.Sprite material
+    sprite.position.x = 2
+    sprite.position.y = 15
+    @glowDots.push sprite
+    scene.add sprite
+
   getGroundTexture: ->
     texture = THREE.ImageUtils.loadTexture './textures/patterns/checker.png'
     texture.wrapS = THREE.RepeatWrapping
@@ -102,17 +118,26 @@ class App
     texture = THREE.ImageUtils.loadTexture './textures/environments/milky_way.jpg'
     return texture
 
+  getGlowDotTexture: ->
+    texture = THREE.ImageUtils.loadTexture './textures/lensflare/lensflare0.png'
+    return texture
+
   gameLoop: =>
     requestAnimationFrame @gameLoop
 
     dt = @clock.getDelta()
-    @update dt
-    @render dt
+    et = @clock.getElapsedTime()
+    @update dt, et
+    @render dt, et
 
-  update: (dt) ->
+  update: (dt, et) ->
     @controls.update(dt) if @controls
 
-  render: ->
+    for glowDot in @glowDots
+      glowDot.position.y = 15 + Math.sin(et) * 2
+      glowDot.material.rotation += .1
+
+  render: (dt, et) ->
     if @stereoEffect
       @stereoEffect.render @scene, @camera
     else
