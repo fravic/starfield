@@ -13,6 +13,7 @@ class App
 
     if isMobile
       @stereoEffect = new THREE.StereoEffect @renderer
+      @stereoEffect.separation = 1
       @initDeviceOrientationControls()
     else
       @initOrbitControls()
@@ -101,7 +102,7 @@ class App
       blending: THREE.AdditiveBlending
 
     sprite = new THREE.Sprite material
-    sprite.position.x = 2
+    sprite.position.x = 8
     sprite.position.y = 15
     @glowDots.push sprite
     scene.add sprite

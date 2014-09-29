@@ -20,6 +20,7 @@
       this.initCamera();
       if (isMobile) {
         this.stereoEffect = new THREE.StereoEffect(this.renderer);
+        this.stereoEffect.separation = 1;
         this.initDeviceOrientationControls();
       } else {
         this.initOrbitControls();
@@ -121,7 +122,7 @@
         blending: THREE.AdditiveBlending
       });
       sprite = new THREE.Sprite(material);
-      sprite.position.x = 2;
+      sprite.position.x = 8;
       sprite.position.y = 15;
       this.glowDots.push(sprite);
       return scene.add(sprite);
