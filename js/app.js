@@ -4,17 +4,24 @@
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   App = (function() {
-    function App(container, stereoscopic) {
+    function App(container, isMobile) {
       this.container = container;
-      this.stereoscopic = stereoscopic != null ? stereoscopic : false;
+      if (isMobile == null) {
+        isMobile = false;
+      }
       this.gameLoop = __bind(this.gameLoop, this);
       this.onResize = __bind(this.onResize, this);
       this.scene = new THREE.Scene();
-      this.scene.fog = new THREE.FogExp2(0x000000, 0.002);
+      this.scene.fog = new THREE.FogExp2(0x000000, 0.0015);
+      this.clock = new THREE.Clock();
       this.initRenderer();
       this.initCamera();
-      this.initControls();
-      this.stereoEffect = new THREE.StereoEffect(this.renderer);
+      if (isMobile) {
+        this.stereoEffect = new THREE.StereoEffect(this.renderer);
+        this.initDeviceOrientationControls();
+      } else {
+        this.initOrbitControls();
+      }
       this.addGroundToScene(this.scene);
       this.addLightToScene(this.scene);
       this.addSkydomeToScene(this.scene);
@@ -37,23 +44,29 @@
       return this.scene.add(this.camera);
     };
 
-    App.prototype.initControls = function() {
+    App.prototype.initOrbitControls = function() {
       this.controls = new THREE.OrbitControls(this.camera, this.container);
       this.controls.rotateUp(Math.PI / 4);
       this.controls.target.set(this.camera.position.x + .1, this.camera.position.y, this.camera.position.z);
       this.controls.noZoom = true;
-      this.controls.noPan = true;
-      return this.controls.update();
+      return this.controls.noPan = true;
     };
 
-    App.prototype.onResize = function() {
+    App.prototype.initDeviceOrientationControls = function() {
+      this.controls = new THREE.DeviceOrientationControls(this.camera, true);
+      return this.controls.connect();
+    };
+
+    App.prototype.onResize = function(e) {
       var height, width;
 
       width = this.container.offsetWidth;
       height = this.container.offsetHeight;
       this.camera.aspect = width / height;
       this.camera.updateProjectionMatrix();
-      this.stereoEffect.setSize(width, height);
+      if (this.stereoEffect) {
+        this.stereoEffect.setSize(width, height);
+      }
       return this.renderer.setSize(width, height);
     };
 
@@ -114,15 +127,22 @@
     };
 
     App.prototype.gameLoop = function() {
+      var dt;
+
       requestAnimationFrame(this.gameLoop);
-      this.update();
-      return this.render();
+      dt = this.clock.getDelta();
+      this.update(dt);
+      return this.render(dt);
     };
 
-    App.prototype.update = function() {};
+    App.prototype.update = function(dt) {
+      if (this.controls) {
+        return this.controls.update(dt);
+      }
+    };
 
     App.prototype.render = function() {
-      if (this.stereoscopic) {
+      if (this.stereoEffect) {
         return this.stereoEffect.render(this.scene, this.camera);
       } else {
         return this.renderer.render(this.scene, this.camera);

@@ -1,14 +1,19 @@
 class App
 
-  constructor: (@container, @stereoscopic = false) ->
+  constructor: (@container, isMobile = false) ->
     @scene = new THREE.Scene()
-    @scene.fog = new THREE.FogExp2 0x000000, 0.002
+    @scene.fog = new THREE.FogExp2 0x000000, 0.0015
+
+    @clock = new THREE.Clock()
 
     @initRenderer()
     @initCamera()
-    @initControls()
 
-    @stereoEffect = new THREE.StereoEffect @renderer
+    if isMobile
+      @stereoEffect = new THREE.StereoEffect @renderer
+      @initDeviceOrientationControls()
+    else
+      @initOrbitControls()
 
     @addGroundToScene(@scene)
     @addLightToScene(@scene)
@@ -29,7 +34,7 @@ class App
     @camera.position.set 0, 15, 0
     @scene.add @camera
 
-  initControls: ->
+  initOrbitControls: ->
     @controls = new THREE.OrbitControls @camera, @container
     @controls.rotateUp Math.PI / 4
     @controls.target.set(
@@ -39,16 +44,19 @@ class App
     )
     @controls.noZoom = true
     @controls.noPan = true
-    @controls.update()
 
-  onResize: =>
+  initDeviceOrientationControls: ->
+    @controls = new THREE.DeviceOrientationControls @camera, true
+    @controls.connect()
+
+  onResize: (e) =>
     width = @container.offsetWidth
     height = @container.offsetHeight
 
     @camera.aspect = width / height
     @camera.updateProjectionMatrix()
 
-    @stereoEffect.setSize width, height
+    @stereoEffect.setSize width, height if @stereoEffect
     @renderer.setSize width, height
 
   addGroundToScene: (scene) ->
@@ -96,13 +104,16 @@ class App
 
   gameLoop: =>
     requestAnimationFrame @gameLoop
-    @update()
-    @render()
 
-  update: ->
+    dt = @clock.getDelta()
+    @update dt
+    @render dt
+
+  update: (dt) ->
+    @controls.update(dt) if @controls
 
   render: ->
-    if @stereoscopic
+    if @stereoEffect
       @stereoEffect.render @scene, @camera
     else
       @renderer.render @scene, @camera
