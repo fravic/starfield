@@ -21,7 +21,9 @@ class App
     @addGroundToScene(@scene)
     @addLightToScene(@scene)
     @addSkydomeToScene(@scene)
-    @addGlowDotToScene(@scene)
+
+    for i in [0..150]
+      @addGlowDotToScene @scene
 
     @gameLoop()
 
@@ -98,12 +100,20 @@ class App
     material = new THREE.SpriteMaterial
       map: @getGlowDotTexture(),
       color: 0xffffff,
-      fog: true,
       blending: THREE.AdditiveBlending
 
+    x = Math.random() * 40 - 20
+    x += (x > 0 ? 15 : -15)
+    z = Math.random() * 40 - 20
+    z += (z > 0 ? 15 : -15)
+    phi = Math.random() * 1000
+    amp = Math.random() * 2 + 1
+
     sprite = new THREE.Sprite material
-    sprite.position.x = 8
-    sprite.position.y = 15
+    sprite.position.x = x
+    sprite.position.z = z
+    sprite.sinPhi = phi
+    sprite.sinA = amp
     @glowDots.push sprite
     scene.add sprite
 
@@ -135,8 +145,7 @@ class App
     @controls.update(dt) if @controls
 
     for glowDot in @glowDots
-      glowDot.position.y = 15 + Math.sin(et) * 2
-      glowDot.material.rotation += .1
+      glowDot.position.y = 15 + Math.sin(et - glowDot.sinPhi) * glowDot.sinA
 
   render: (dt, et) ->
     if @stereoEffect

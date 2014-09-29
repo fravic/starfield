@@ -7,6 +7,8 @@
     App.prototype.glowDots = [];
 
     function App(container, isMobile) {
+      var i, _i;
+
       this.container = container;
       if (isMobile == null) {
         isMobile = false;
@@ -28,7 +30,9 @@
       this.addGroundToScene(this.scene);
       this.addLightToScene(this.scene);
       this.addSkydomeToScene(this.scene);
-      this.addGlowDotToScene(this.scene);
+      for (i = _i = 0; _i <= 150; i = ++_i) {
+        this.addGlowDotToScene(this.scene);
+      }
       this.gameLoop();
       window.addEventListener('resize', this.onResize, false);
       setTimeout(this.onResize, 1);
@@ -113,17 +117,28 @@
     };
 
     App.prototype.addGlowDotToScene = function(scene) {
-      var material, sprite;
+      var amp, material, phi, sprite, x, z, _ref, _ref1;
 
       material = new THREE.SpriteMaterial({
         map: this.getGlowDotTexture(),
         color: 0xffffff,
-        fog: true,
         blending: THREE.AdditiveBlending
       });
+      x = Math.random() * 40 - 20;
+      x += (_ref = x > 0) != null ? _ref : {
+        15: -15
+      };
+      z = Math.random() * 40 - 20;
+      z += (_ref1 = z > 0) != null ? _ref1 : {
+        15: -15
+      };
+      phi = Math.random() * 1000;
+      amp = Math.random() * 2 + 1;
       sprite = new THREE.Sprite(material);
-      sprite.position.x = 8;
-      sprite.position.y = 15;
+      sprite.position.x = x;
+      sprite.position.z = z;
+      sprite.sinPhi = phi;
+      sprite.sinA = amp;
       this.glowDots.push(sprite);
       return scene.add(sprite);
     };
@@ -173,8 +188,7 @@
       _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         glowDot = _ref[_i];
-        glowDot.position.y = 15 + Math.sin(et) * 2;
-        _results.push(glowDot.material.rotation += .1);
+        _results.push(glowDot.position.y = 15 + Math.sin(et - glowDot.sinPhi) * glowDot.sinA);
       }
       return _results;
     };
