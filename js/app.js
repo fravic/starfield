@@ -166,7 +166,7 @@
     App.prototype.getGlowDotTexture = function() {
       var texture;
 
-      texture = THREE.ImageUtils.loadTexture('./textures/lensflare/lensflare0.png');
+      texture = THREE.ImageUtils.loadTexture('./textures/lensflare/lensflare.png');
       return texture;
     };
 

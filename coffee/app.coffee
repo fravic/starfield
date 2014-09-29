@@ -135,7 +135,7 @@ class App
     return texture
 
   getGlowDotTexture: ->
-    texture = THREE.ImageUtils.loadTexture './textures/lensflare/lensflare0.png'
+    texture = THREE.ImageUtils.loadTexture './textures/lensflare/lensflare.png'
     return texture
 
   gameLoop: =>
