@@ -123,7 +123,7 @@ class App
     scene.add @pointCloud
 
   getGroundTexture: ->
-    texture = THREE.ImageUtils.loadTexture './textures/patterns/checker.png'
+    texture = THREE.ImageUtils.loadTexture './textures/patterns/grid.png'
     texture.wrapS = THREE.RepeatWrapping
     texture.wrapT = THREE.RepeatWrapping
     texture.repeat = new THREE.Vector2 50, 50
