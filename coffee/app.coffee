@@ -1,10 +1,10 @@
 class App
 
-  particleCount: 1000
+  particleCount: 700
 
   constructor: (@container, isMobile = false) ->
     @scene = new THREE.Scene()
-    @scene.fog = new THREE.FogExp2 0x000000, 0.0015
+    @scene.fog = new THREE.FogExp2 0x000000, 0.07
 
     @clock = new THREE.Clock()
 
@@ -73,6 +73,7 @@ class App
       shading: THREE.FlatShading,
       blending: THREE.AdditiveBlending,
       transparent: true,
+      fog: false,
       map: @getGroundTexture()
 
     unless material.map instanceof THREE.Texture
@@ -91,7 +92,8 @@ class App
 
     material = new THREE.MeshBasicMaterial
       map: @getSkyTexture()
-      side: THREE.BackSide
+      side: THREE.BackSide,
+      fog: false
 
     mesh = new THREE.Mesh geometry, material
     scene.add mesh

@@ -4,7 +4,7 @@
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   App = (function() {
-    App.prototype.particleCount = 1000;
+    App.prototype.particleCount = 700;
 
     function App(container, isMobile) {
       this.container = container;
@@ -14,7 +14,7 @@
       this.gameLoop = __bind(this.gameLoop, this);
       this.onResize = __bind(this.onResize, this);
       this.scene = new THREE.Scene();
-      this.scene.fog = new THREE.FogExp2(0x000000, 0.0015);
+      this.scene.fog = new THREE.FogExp2(0x000000, 0.07);
       this.clock = new THREE.Clock();
       this.initRenderer();
       this.initCamera();
@@ -85,6 +85,7 @@
         shading: THREE.FlatShading,
         blending: THREE.AdditiveBlending,
         transparent: true,
+        fog: false,
         map: this.getGroundTexture()
       });
       if (!(material.map instanceof THREE.Texture)) {
@@ -108,7 +109,8 @@
       geometry = new THREE.SphereGeometry(600, 60, 40);
       material = new THREE.MeshBasicMaterial({
         map: this.getSkyTexture(),
-        side: THREE.BackSide
+        side: THREE.BackSide,
+        fog: false
       });
       mesh = new THREE.Mesh(geometry, material);
       return scene.add(mesh);
